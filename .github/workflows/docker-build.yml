@@ -1,0 +1,24 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t k29photo:latest .
+    
+    - name: Test Docker image
+      run: |
+        docker-compose build
+        echo "Docker image built successfully"
