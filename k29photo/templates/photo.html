@@ -1,30 +1,43 @@
 {% extends 'base.html' %}
-{% block title %}{{ photo.caption or 'Photo' }} — k29photo{% endblock %}
+{% block title %}{{ photo.caption or 'Untitled' }} — Pixora{% endblock %}
 
 {% block content %}
+
 <div class="breadcrumb">
-  <a href="{{ url_for('main.browse') }}">Browse</a> /
-  <a href="{{ url_for('albums.view_album', album_id=photo.album_id) }}">{{ photo.album_name }}</a> /
-  <span>{{ photo.caption or 'Photo' }}</span>
+  <a href="{{ url_for('main.browse') }}">Browse</a>
+  <span>{{ photo.album_name }}</span>
+  <span>{{ photo.caption or 'Untitled' }}</span>
 </div>
 
 <div class="photo-detail">
-  <div class="photo-full">
-    <img src="{{ url_for('photos.serve_image', photo_id=photo.photo_id) }}"
-         alt="{{ photo.caption }}" class="full-image">
+
+  <!-- Left: image -->
+  <div>
+    <img class="full-image"
+         src="{{ url_for('photos.serve_image', photo_id=photo.photo_id) }}"
+         alt="{{ photo.caption }}">
   </div>
 
+  <!-- Right: sidebar -->
   <div class="photo-sidebar">
+
     <h1 class="photo-title">{{ photo.caption or 'Untitled' }}</h1>
-    <p class="photo-owner">by <strong>{{ photo.owner_name }}</strong>
-      in <a href="{{ url_for('albums.view_album', album_id=photo.album_id) }}">{{ photo.album_name }}</a>
+    <p class="photo-owner">
+      by <a href="{{ url_for('main.user_profile', user_id=photo.owner_id) }}">
+        {{ photo.owner_name }}
+      </a>
+      in <a href="{{ url_for('albums.view_album', album_id=photo.album_id) }}">
+        {{ photo.album_name }}
+      </a>
     </p>
 
     <!-- Tags -->
     {% if tags %}
-    <div class="tag-list">
+    <div class="tag-list" style="margin-bottom:1.25rem">
       {% for tag in tags %}
-        <a href="{{ url_for('tags.view_tag', tag_name=tag.tag_name) }}" class="tag">#{{ tag.tag_name }}</a>
+        <a href="{{ url_for('tags.view_tag', tag_name=tag.tag_name) }}" class="tag">
+          #{{ tag.tag_name }}
+        </a>
       {% endfor %}
     </div>
     {% endif %}
@@ -32,65 +45,89 @@
     <!-- Likes -->
     <div class="likes-section">
       <span class="like-count">{{ likes|length }} ♥</span>
-        {% if session.user_id %}
+      {% if session.user_id %}
         {% if user_liked %}
-          <form action="{{ url_for('photos.unlike_photo', photo_id=photo.photo_id) }}" method="post" style="display:inline">
-            <button type="submit" class="btn btn-sm btn-liked">Unlike</button>
+          <form method="post" action="{{ url_for('photos.unlike_photo', photo_id=photo.photo_id) }}">
+            <button class="btn btn-liked btn-sm">Unlike</button>
           </form>
         {% else %}
-          <form action="{{ url_for('photos.like_photo', photo_id=photo.photo_id) }}" method="post" style="display:inline">
-            <button type="submit" class="btn btn-sm btn-outline">♥ Like</button>
+          <form method="post" action="{{ url_for('photos.like_photo', photo_id=photo.photo_id) }}">
+            <button class="btn btn-outline btn-sm">♥ Like</button>
           </form>
         {% endif %}
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">♥ Like</a>
       {% endif %}
     </div>
 
+    <!-- Who liked -->
     {% if likes %}
     <div class="likers">
-      <p class="hint">Liked by:
-        {% for l in likes %}
-          {{ l.full_name }}{% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </p>
+      <p class="hint" style="margin-bottom:0.4rem">Liked by</p>
+      {% for l in likes %}
+        <a href="{{ url_for('main.user_profile', user_id=l.user_id) }}" class="tag">
+          {{ l.full_name }}
+        </a>
+      {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Delete (owner only) -->
+    <!-- Photo metadata -->
+    <div class="photo-meta-row">
+      {% if photo.uploaded_at %}
+        <span><span class="photo-meta-label">Uploaded</span> {{ photo.uploaded_at.strftime('%d %b %Y') }}</span>
+      {% endif %}
+      <span>
+        <span class="photo-meta-label">Visibility</span>
+        <span class="visibility-badge {{ photo.visibility }}">{{ photo.visibility }}</span>
+      </span>
+    </div>
+
+    <!-- Owner actions -->
     {% if session.user_id == photo.owner_id %}
-    <form action="{{ url_for('photos.delete_photo', photo_id=photo.photo_id) }}" method="post"
-          onsubmit="return confirm('Delete this photo?')">
-      <button type="submit" class="btn btn-sm btn-danger">Delete Photo</button>
-    </form>
+    <div style="margin-top:1.25rem; display:flex; gap:0.5rem">
+      <form method="post" action="{{ url_for('photos.delete_photo', photo_id=photo.photo_id) }}">
+        <button class="btn btn-danger btn-sm">Delete Photo</button>
+      </form>
+    </div>
     {% endif %}
+
   </div>
 </div>
 
 <!-- Comments -->
-<section class="comments-section">
+<div class="comments-section">
   <h2>Comments ({{ comments|length }})</h2>
 
-  {% for c in comments %}
-  <div class="comment">
-    <div class="comment-author">{{ c.author }}</div>
-    <div class="comment-text">{{ c.content }}</div>
-    <div class="comment-date">{{ c.post_date }}</div>
-  </div>
-  {% endfor %}
-
-  {% if not comments %}
-    <p class="empty">No comments yet. Be the first!</p>
+  {% if comments %}
+    {% for c in comments %}
+    <div class="comment">
+      <p class="comment-author">
+        {% if c.author_id %}
+          <a href="{{ url_for('main.user_profile', user_id=c.author_id) }}">{{ c.author }}</a>
+        {% else %}
+          {{ c.author }}
+        {% endif %}
+      </p>
+      <p class="comment-text">{{ c.content }}</p>
+      <p class="comment-date">{{ c.post_date }}</p>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="empty" style="margin-bottom:1.5rem">No comments yet. Be the first!</p>
   {% endif %}
 
-  <!-- Post comment form -->
   <div class="comment-form">
     <h3>Leave a comment</h3>
-    <form action="{{ url_for('comments.post_comment', photo_id=photo.photo_id) }}" method="post">
+    <form method="post" action="{{ url_for('comments.add_comment', photo_id=photo.photo_id) }}">
       {% if not session.user_id %}
-        <input type="text" name="guest_name" placeholder="Your name (required)" class="input" required>
+        <input type="text" name="guest_name" placeholder="Your name (optional)" class="input">
       {% endif %}
-      <textarea name="content" placeholder="Write your comment..." class="input textarea" required></textarea>
-      <button type="submit" class="btn btn-primary btn-sm">Post Comment</button>
+      <textarea name="content" class="input textarea"
+                placeholder="Write something..." required></textarea>
+      <button type="submit" class="btn btn-primary">Post comment</button>
     </form>
   </div>
-</section>
+</div>
+
 {% endblock %}

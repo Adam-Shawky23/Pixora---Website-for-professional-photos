@@ -1,19 +1,14 @@
-{# Σελίδα ανακάλυψης και αναζήτησης φωτογραφιών #}
 {% extends 'base.html' %}
-{% block title %}Discover — k29photo{% endblock %}
+{% block title %}Discover — Pixora{% endblock %}
 
 {% block content %}
 
-{# Κεφαλίδα σελίδας με τίτλο #}
 <div class="discover-header">
-  <div>
-    <p class="discover-eyebrow">Explore</p>
-    <h1 class="discover-title">Discover</h1>
-    <p class="discover-sub">Search by tags, browse popular topics, find your next favourite photo.</p>
-  </div>
+  <p class="discover-eyebrow">Explore</p>
+  <h1 class="discover-title">Discover</h1>
+  <p class="discover-sub">Search by tags, browse popular topics, find your next favourite photo.</p>
 </div>
 
-{# Φόρμα αναζήτησης φωτογραφιών με ετικέτες #}
 <div class="discover-search">
   <form action="{{ url_for('photos.search') }}" method="get" class="discover-search-form">
     <div class="search-input-wrap">
@@ -27,15 +22,25 @@
   <p class="hint">Separate multiple tags with spaces to find photos matching ALL of them</p>
 </div>
 
-{# Αποτελέσματα αναζήτησης αν υπάρχει ερώτημα #}
 {% if query %}
   <div class="discover-results">
     <div class="results-bar">
-      <h2>{{ results|length }} result{% if results|length != 1 %}s{% endif %} for
-        <em>"{{ query }}"</em>
+      <h2>
+        {% if results %}
+          {{ results|length }} result{% if results|length != 1 %}s{% endif %} for <em>"{{ query }}"</em>
+        {% else %}
+          No results for <em>"{{ query }}"</em>
+        {% endif %}
       </h2>
-      {% if not results %}
-        <p class="empty">No photos found — try different tags.</p>
+
+      <!-- Did you mean? -->
+      {% if not results and suggestions %}
+      <div class="search-suggestions">
+        <strong>Did you mean:</strong>
+        {% for s in suggestions %}
+          <a href="{{ url_for('photos.search') }}?q={{ s }}" class="suggestion-link">#{{ s }}</a>
+        {% endfor %}
+      </div>
       {% endif %}
     </div>
 
@@ -46,13 +51,15 @@
         <div class="masonry-img">
           <img src="{{ url_for('photos.serve_image', photo_id=photo.photo_id) }}"
                alt="{{ photo.caption }}" loading="lazy">
-          <div class="masonry-hover">
-            <span class="masonry-like">♥ {{ photo.like_count }}</span>
-          </div>
+          <div class="masonry-hover"><span class="masonry-like">♥ {{ photo.like_count }}</span></div>
         </div>
         <div class="masonry-info">
           <p class="masonry-caption">{{ photo.caption or 'Untitled' }}</p>
-          <p class="masonry-meta">{{ photo.owner_name }}</p>
+          <p class="masonry-meta">
+            <a href="{{ url_for('main.user_profile', user_id=photo.owner_id) }}" style="color:var(--text3)">
+              {{ photo.owner_name }}
+            </a>
+          </p>
         </div>
       </a>
       {% endfor %}
@@ -61,13 +68,12 @@
   </div>
 
 {% else %}
-{# Δημοφιλείς ετικέτες όταν δεν υπάρχει αναζήτηση #}
+
 <div class="discover-section">
   <div class="discover-section-header">
     <h2>Popular Tags</h2>
     <p class="section-sub">Click any tag to see all photos</p>
   </div>
-
   <div class="tags-showcase">
     {% for tag in tags %}
     <a href="{{ url_for('tags.view_tag', tag_name=tag.tag_name) }}"
@@ -79,192 +85,45 @@
     {% endfor %}
   </div>
 </div>
+
 {% endif %}
 
 <style>
-/* ── DISCOVER HEADER ────────────────────────────────── */
-.discover-header {
-  padding: 2rem 0 1.5rem;
-}
-.discover-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--amber);
-  margin-bottom: 0.5rem;
-}
-.discover-title {
-  font-size: clamp(2.8rem, 6vw, 4.5rem);
-  line-height: 1.0;
-  letter-spacing: -0.04em;
-  margin-bottom: 0.6rem;
-}
-.discover-sub {
-  color: var(--text2);
-  font-size: 0.95rem;
-  max-width: 480px;
-}
-
-/* ── SEARCH ─────────────────────────────────────────── */
-.discover-search {
-  margin: 2rem 0 3rem;
-}
-.discover-search-form {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.5rem;
-}
-.search-input-wrap {
-  flex: 1;
-  position: relative;
-}
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text3);
-  font-size: 1.2rem;
-  pointer-events: none;
-}
-.discover-input {
-  padding-left: 2.8rem !important;
-  font-size: 1rem;
-  height: 52px;
-  border-radius: 12px !important;
-}
-
-/* ── RESULTS BAR ────────────────────────────────────── */
-.discover-results { margin-bottom: 3rem; }
-.results-bar {
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border);
-}
-.results-bar h2 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--text2);
-}
-.results-bar h2 em {
-  color: var(--text);
-  font-style: normal;
-  font-weight: 600;
-}
-
-/* ── DISCOVER SECTION ───────────────────────────────── */
-.discover-section { margin-bottom: 4rem; }
-.discover-section-header {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-.discover-section-header h2 {
-  font-size: 1.6rem;
-}
-
-/* ── TAGS SHOWCASE ──────────────────────────────────── */
-.tags-showcase {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  align-items: center;
-}
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 0.5rem 1.1rem;
-  font-size: var(--size, 0.88rem);
-  font-weight: 500;
-  color: var(--text2);
-  transition: all 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-.tag-pill::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(245,166,35,0.1), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.tag-pill:hover {
-  border-color: rgba(245,166,35,0.4);
-  color: var(--amber);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(245,166,35,0.12);
-  text-decoration: none;
-}
-.tag-pill:hover::before { opacity: 1; }
-.tag-hash { color: var(--amber); font-weight: 700; margin-right: 1px; }
-.tag-pill-count {
-  font-size: 0.7em;
-  color: var(--text3);
-  margin-left: 0.4rem;
-  background: var(--bg3);
-  padding: 0.1rem 0.4rem;
-  border-radius: 10px;
-}
-
-/* ── MASONRY (shared with index) ────────────────────── */
-.masonry-grid {
-  columns: 4;
-  column-gap: 1rem;
-}
-@media (max-width: 1100px) { .masonry-grid { columns: 3; } }
-@media (max-width: 700px)  { .masonry-grid { columns: 2; } }
-
-.masonry-card {
-  break-inside: avoid;
-  display: block;
-  margin-bottom: 1rem;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  position: relative;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  transition: transform 0.25s, box-shadow 0.25s;
-}
-.masonry-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-  text-decoration: none;
-}
-.masonry-img { position: relative; overflow: hidden; }
-.masonry-img img { width: 100%; display: block; transition: transform 0.4s; }
-.masonry-card:hover .masonry-img img { transform: scale(1.03); }
-.masonry-hover {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.25s;
-}
-.masonry-card:hover .masonry-hover { opacity: 1; }
-.masonry-like { color: #fff; font-size: 1rem; font-weight: 600; }
-.masonry-info { padding: 0.65rem 0.8rem; }
-.masonry-caption {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.masonry-meta { font-size: 0.74rem; color: var(--text3); margin-top: 0.15rem; }
+.discover-header { padding: 2rem 0 1.5rem; }
+.discover-eyebrow { font-size:0.75rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--amber); margin-bottom:0.5rem; }
+.discover-title { font-size:clamp(2.8rem,6vw,4.5rem); line-height:1.0; letter-spacing:-0.04em; margin-bottom:0.6rem; }
+.discover-sub { color:var(--text2); font-size:0.95rem; max-width:480px; }
+.discover-search { margin:2rem 0 3rem; }
+.discover-search-form { display:flex; gap:0.75rem; margin-bottom:0.5rem; }
+.search-input-wrap { flex:1; position:relative; }
+.search-icon { position:absolute; left:1rem; top:50%; transform:translateY(-50%); color:var(--text3); font-size:1.2rem; pointer-events:none; }
+.discover-input { padding-left:2.8rem!important; font-size:1rem; height:52px; border-radius:12px!important; }
+.discover-results { margin-bottom:3rem; }
+.results-bar { margin-bottom:1.75rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border); }
+.results-bar h2 { font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:400; color:var(--text2); }
+.results-bar h2 em { color:var(--text); font-style:normal; font-weight:600; }
+.discover-section { margin-bottom:4rem; }
+.discover-section-header { display:flex; align-items:baseline; gap:1rem; margin-bottom:1.75rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+.discover-section-header h2 { font-size:1.6rem; }
+.tags-showcase { display:flex; flex-wrap:wrap; gap:0.65rem; align-items:center; }
+.tag-pill { display:inline-flex; align-items:center; gap:0.15rem; background:var(--bg2); border:1px solid var(--border); border-radius:100px; padding:0.5rem 1.1rem; font-size:var(--size,0.88rem); font-weight:500; color:var(--text2); transition:all 0.2s; position:relative; overflow:hidden; }
+.tag-pill:hover { border-color:rgba(245,166,35,0.4); color:var(--amber); transform:translateY(-2px); box-shadow:0 4px 16px rgba(245,166,35,0.12); text-decoration:none; }
+.tag-hash { color:var(--amber); font-weight:700; margin-right:1px; }
+.tag-pill-count { font-size:0.7em; color:var(--text3); margin-left:0.4rem; background:var(--bg3); padding:0.1rem 0.4rem; border-radius:10px; }
+.masonry-grid { columns:4; column-gap:1rem; }
+@media(max-width:1100px){.masonry-grid{columns:3;}}
+@media(max-width:700px){.masonry-grid{columns:2;}}
+.masonry-card { break-inside:avoid; display:block; margin-bottom:1rem; border-radius:var(--radius-sm); overflow:hidden; position:relative; background:var(--bg2); border:1px solid var(--border); transition:transform 0.25s,box-shadow 0.25s; }
+.masonry-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); text-decoration:none; }
+.masonry-img { position:relative; overflow:hidden; }
+.masonry-img img { width:100%; display:block; transition:transform 0.4s; }
+.masonry-card:hover .masonry-img img { transform:scale(1.03); }
+.masonry-hover { position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.25s; }
+.masonry-card:hover .masonry-hover { opacity:1; }
+.masonry-like { color:#fff; font-size:1rem; font-weight:600; }
+.masonry-info { padding:0.65rem 0.8rem; }
+.masonry-caption { font-size:0.82rem; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.masonry-meta { font-size:0.74rem; color:var(--text3); margin-top:0.15rem; }
 </style>
 
 {% endblock %}

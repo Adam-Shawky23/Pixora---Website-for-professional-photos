@@ -1,73 +1,81 @@
-# Εισαγωγή Flask και database συναρτήσεων
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, abort
 from db import get_cursor, commit, rollback
 
-# Δημιουργία blueprint για σχόλια
 comments_bp = Blueprint('comments', __name__)
 
 
-# Δρομολόγηση για προσθήκη σχολίου σε φωτογραφία
+def _notify(cur, user_id, actor_id, notif_type, message, link):
+    if user_id == actor_id:
+        return
+    cur.execute("""
+        INSERT INTO notifications (user_id, actor_id, type, message, link)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (user_id, actor_id, notif_type, message, link))
+
+
 @comments_bp.route('/photos/<int:photo_id>/comment', methods=['POST'])
-def post_comment(photo_id):
-    content    = request.form.get('content', '').strip()
-    guest_name = request.form.get('guest_name', '').strip() or None
-
-    user_id = session.get('user_id')
-
-    # Έλεγχος: το σχόλιο πρέπει να έχει περιεχόμενο
+def add_comment(photo_id):
+    content = request.form.get('content', '').strip()
     if not content:
         flash('Comment cannot be empty.', 'error')
         return redirect(url_for('photos.view_photo', photo_id=photo_id))
 
-    # Έλεγχος: επισκέπτης πρέπει να δώσει όνομα
-    # Guest must supply a name
-    if not user_id and not guest_name:
-        flash('Please enter your name to comment as a guest.', 'error')
-        return redirect(url_for('photos.view_photo', photo_id=photo_id))
-
     cur = get_cursor()
+
+    # Get photo owner for notification
+    cur.execute("""
+        SELECT a.owner_id, p.caption FROM photos p
+        JOIN albums a ON p.album_id = a.album_id
+        WHERE p.photo_id = %s
+    """, (photo_id,))
+    photo = cur.fetchone()
+    if not photo:
+        abort(404)
+
     try:
-        # Εισαγωγή σχολίου στη βάση δεδομένων
-        cur.execute("""
-            INSERT INTO comments (photo_id, user_id, guest_name, content)
-            VALUES (%s, %s, %s, %s)
-        """, (photo_id, user_id, guest_name if not user_id else None, content))
+        if 'user_id' in session:
+            cur.execute("""
+                INSERT INTO comments (photo_id, user_id, content, post_date)
+                VALUES (%s, %s, %s, CURRENT_DATE)
+            """, (photo_id, session['user_id'], content))
+
+            actor_name = session.get('user_name', 'Someone')
+            caption    = photo['caption'] or 'your photo'
+            _notify(cur, photo['owner_id'], session['user_id'],
+                    'comment',
+                    f'{actor_name} commented on "{caption}"',
+                    url_for('photos.view_photo', photo_id=photo_id))
+        else:
+            guest_name = request.form.get('guest_name', '').strip() or 'Guest'
+            cur.execute("""
+                INSERT INTO comments (photo_id, guest_name, content, post_date)
+                VALUES (%s, %s, %s, CURRENT_DATE)
+            """, (photo_id, guest_name, content))
+
         commit()
         flash('Comment posted!', 'success')
     except Exception as e:
         rollback()
-        # Έλεγχος σφάλματος για σχόλια στις δικές του φωτογραφίες
-        # Trigger fires for self-comment — show friendly message
-        msg = str(e)
-        if 'cannot comment on their own' in msg:
-            flash('You cannot comment on your own photos.', 'error')
-        else:
-            flash(f'Error posting comment: {msg}', 'error')
+        flash(str(e), 'error')
 
     return redirect(url_for('photos.view_photo', photo_id=photo_id))
 
 
-# Δρομολόγηση για αναζήτηση σχολίων που ταιριάζουν ακριβώς με το ερώτημα
 @comments_bp.route('/search/comments')
 def search_comments():
-    """
-    Αναζήτηση χρηστών των οποίων τα σχόλια ταιριάζουν ακριβώς με το κείμενο ερωτήματος.
-    Επιστρέφει χρήστες ταξινομημένους κατά αριθμό συμφωνούντων σχολίων (φθίνουσα σειρά).
-    """
     query   = request.args.get('q', '').strip()
     results = []
-
     if query:
         cur = get_cursor()
-        # Αναζήτηση χρηστών με σχόλια που ταιριάζουν ακριβώς
         cur.execute("""
-            SELECT u.user_id,
-                   u.first_name || ' ' || u.last_name AS full_name,
-                   COUNT(*) AS match_count
+            SELECT
+                COALESCE(u.first_name || ' ' || u.last_name, c.guest_name) AS author,
+                u.user_id,
+                COUNT(*) AS match_count
             FROM comments c
-            JOIN users u ON c.user_id = u.user_id
+            LEFT JOIN users u ON c.user_id = u.user_id
             WHERE c.content = %s
-            GROUP BY u.user_id, full_name
+            GROUP BY author, u.user_id
             ORDER BY match_count DESC
         """, (query,))
         results = cur.fetchall()

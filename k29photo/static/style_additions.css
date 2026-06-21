@@ -1,0 +1,104 @@
+/* ── APPEND THESE TO YOUR EXISTING style.css ── */
+
+/* Navbar notification link */
+.notif-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Skeleton loader for images loading from DB */
+.photo-thumb img,
+.masonry-img img,
+.full-image {
+  background: var(--bg3);
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.photo-thumb::before,
+.masonry-img::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  animation: skeleton-pulse 1.4s ease infinite;
+  z-index: 0;
+}
+
+.photo-thumb img,
+.masonry-img img {
+  position: relative;
+  z-index: 1;
+}
+
+/* Photo metadata on photo detail page */
+.photo-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-top: 1rem;
+  font-size: 0.82rem;
+  color: var(--text2);
+}
+.photo-meta-row span { display: flex; align-items: center; gap: 0.4rem; }
+.photo-meta-label { color: var(--text3); min-width: 80px; }
+
+/* "Did you mean?" suggestions */
+.search-suggestions {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text2);
+}
+.search-suggestions strong { color: var(--text); }
+.suggestion-link {
+  display: inline-block;
+  margin: 0.2rem 0.3rem 0 0;
+  color: var(--amber);
+  font-weight: 500;
+}
+.suggestion-link:hover { text-decoration: underline; }
+
+/* Visibility badge on album cards */
+.visibility-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  background: var(--bg3);
+}
+.visibility-badge.friends { color: var(--amber); border-color: rgba(245,166,35,0.3); background: rgba(245,166,35,0.07); }
+.visibility-badge.private { color: var(--red);   border-color: rgba(224,82,82,0.3);  background: rgba(224,82,82,0.07); }

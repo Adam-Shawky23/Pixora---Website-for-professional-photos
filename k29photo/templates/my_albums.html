@@ -1,30 +1,136 @@
-{# Σελίδα με τα αλμπουμ του χρήστη #}
 {% extends 'base.html' %}
-{% block title %}My Albums — k29photo{% endblock %}
+{% block title %}My Albums — Pixora{% endblock %}
 
 {% block content %}
-{# Κύριο περιεχόμενο σελίδας αλμπουμ #}
 
-{# Header με τίτλο και κουμπί δημιουργίας αλμπουμ #}
 <div class="page-header">
-  <h1>My Albums</h1>
+  <h1 class="page-title">My Albums</h1>
   <a href="{{ url_for('albums.create_album') }}" class="btn btn-primary">+ New Album</a>
 </div>
 
-{# Πλέγμα με όλα τα αλμπουμ του χρήστη #}
+{% if albums %}
 <div class="album-grid">
   {% for a in albums %}
-  {# Κάρτα αλμπουμ με όνομα, αριθμό φωτογραφιών και ημερομηνία #}
-  <a href="{{ url_for('albums.view_album', album_id=a.album_id) }}" class="album-card">
-    <div class="album-info">
-      <h3>{{ a.name }}</h3>
-      <p class="meta">{{ a.photo_count }} photo{% if a.photo_count != 1 %}s{% endif %} &bull; {{ a.creation_date }}</p>
+  <div class="album-card-wrap">
+    <a href="{{ url_for('albums.view_album', album_id=a.album_id) }}" class="album-card">
+      <div class="album-card-inner">
+
+        <div class="browse-card-top">
+          <span class="browse-count">
+            {{ a.photo_count }} photo{% if a.photo_count != 1 %}s{% endif %}
+          </span>
+
+          <!-- Privacy badge -->
+          {% if a.visibility == 'private' %}
+            <span class="visibility-badge private">🔒 Private</span>
+          {% elif a.visibility == 'friends' %}
+            <span class="visibility-badge friends">⭐ Close Friends</span>
+          {% else %}
+            <span class="visibility-badge">🌍 Public</span>
+          {% endif %}
+        </div>
+
+        <h3 class="browse-name">{{ a.name }}</h3>
+        <p class="browse-date">{{ a.creation_date }}</p>
+      </div>
+    </a>
+
+    <!-- Actions row under card -->
+    <div class="album-actions-row">
+      {% if a.visibility == 'friends' %}
+        <a href="{{ url_for('albums.manage_sharing', album_id=a.album_id) }}"
+           class="btn btn-outline btn-sm">⭐ Manage access</a>
+      {% elif a.visibility == 'private' %}
+        <a href="{{ url_for('albums.manage_sharing', album_id=a.album_id) }}"
+           class="btn btn-outline btn-sm">🔒 Change privacy</a>
+      {% else %}
+        <a href="{{ url_for('albums.manage_sharing', album_id=a.album_id) }}"
+           class="btn btn-outline btn-sm">Privacy settings</a>
+      {% endif %}
+
+      <form method="post" action="{{ url_for('albums.delete_album', album_id=a.album_id) }}"
+            onsubmit="return confirm('Delete {{ a.name }}? This removes all photos inside.')">
+        <button class="btn btn-danger btn-sm">Delete</button>
+      </form>
     </div>
-  </a>
-  {% else %}
-  {# Μήνυμα αν δεν υπάρχουν αλμπουμ #}
-  <p class="empty">You have no albums yet. <a href="{{ url_for('albums.create_album') }}">Create one!</a></p>
+  </div>
   {% endfor %}
 </div>
+
+{% else %}
+<div style="text-align:center; padding:4rem 0;">
+  <p style="font-size:3rem; margin-bottom:1rem;">📁</p>
+  <p class="empty">No albums yet.</p>
+  <a href="{{ url_for('albums.create_album') }}" class="btn btn-primary" style="margin-top:1rem">
+    Create your first album
+  </a>
+</div>
+{% endif %}
+
+<style>
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.album-card-wrap { display: flex; flex-direction: column; gap: 0; }
+.album-card {
+  display: block;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.album-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.album-card:hover { border-color: var(--border2); text-decoration: none; }
+.album-card:hover::before { opacity: 1; }
+.album-card-inner { padding: 1.25rem; }
+.album-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border2);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.browse-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.browse-count {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.visibility-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  background: var(--bg3);
+}
+.visibility-badge.friends { color:var(--amber); border-color:rgba(245,166,35,0.3); background:rgba(245,166,35,0.07); }
+.visibility-badge.private { color:var(--red);   border-color:rgba(224,82,82,0.3);  background:rgba(224,82,82,0.07); }
+.browse-name { font-size:1.05rem; color:var(--text); margin-bottom:0.3rem; font-family:'Playfair Display',serif; font-weight:400; }
+.browse-date { font-size:0.75rem; color:var(--text3); }
+</style>
 
 {% endblock %}

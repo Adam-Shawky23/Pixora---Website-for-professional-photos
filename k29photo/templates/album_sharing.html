@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Sharing — {{ album.name }} — Pixora{% endblock %}
+
+{% block content %}
+
+<div class="sharing-header">
+  <a href="{{ url_for('albums.view_album', album_id=album.album_id) }}" class="back-link">← Back to album</a>
+  <h1 class="sharing-title">Privacy &amp; Sharing</h1>
+  <p class="sharing-sub">{{ album.name }}</p>
+</div>
+
+<!-- Visibility selector -->
+<div class="sidebar-card sharing-card">
+  <h3>Who can see this album</h3>
+  <form method="post" class="vis-options">
+    <input type="hidden" name="action" value="set_visibility">
+
+    <label class="vis-option {% if album.visibility == 'public' %}vis-active{% endif %}">
+      <input type="radio" name="visibility" value="public"
+             {% if album.visibility == 'public' %}checked{% endif %}
+             onchange="this.form.submit()">
+      <div class="vis-icon">🌍</div>
+      <div>
+        <strong>Public</strong>
+        <p>Anyone can view, including guests.</p>
+      </div>
+    </label>
+
+    <label class="vis-option {% if album.visibility == 'friends' %}vis-active{% endif %}">
+      <input type="radio" name="visibility" value="friends"
+             {% if album.visibility == 'friends' %}checked{% endif %}
+             onchange="this.form.submit()">
+      <div class="vis-icon">⭐</div>
+      <div>
+        <strong>Close Friends</strong>
+        <p>Only people you add below can view this album.</p>
+      </div>
+    </label>
+
+    <label class="vis-option {% if album.visibility == 'private' %}vis-active{% endif %}">
+      <input type="radio" name="visibility" value="private"
+             {% if album.visibility == 'private' %}checked{% endif %}
+             onchange="this.form.submit()">
+      <div class="vis-icon">🔒</div>
+      <div>
+        <strong>Private</strong>
+        <p>Only you can see this album.</p>
+      </div>
+    </label>
+  </form>
+</div>
+
+<!-- Access list — only shown for 'friends' -->
+{% if album.visibility == 'friends' %}
+<div class="sidebar-card sharing-card">
+  <h3>People with access</h3>
+
+  {% if granted_users %}
+    <div class="user-list" style="margin-bottom:1.25rem">
+      {% for u in granted_users %}
+      <div class="user-card compact">
+        <div class="user-info">
+          <strong>
+            <a href="{{ url_for('main.user_profile', user_id=u.user_id) }}"
+               style="color:var(--text)">{{ u.full_name }}</a>
+          </strong>
+          <span class="meta">{{ u.email }}</span>
+        </div>
+        <form method="post">
+          <input type="hidden" name="action" value="revoke">
+          <input type="hidden" name="user_id" value="{{ u.user_id }}">
+          <button type="submit" class="btn btn-outline btn-sm">Remove</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty" style="margin-bottom:1.25rem">
+      Nobody has access yet. Add people from your friends list below.
+    </p>
+  {% endif %}
+
+  {% if friends %}
+  <h3 style="margin-bottom:0.75rem">Add from your friends</h3>
+  <div class="user-list">
+    {% for f in friends %}
+    <div class="user-card compact">
+      <div class="user-info">
+        <strong>{{ f.full_name }}</strong>
+        <span class="meta">{{ f.email }}</span>
+      </div>
+      <form method="post">
+        <input type="hidden" name="action" value="grant">
+        <input type="hidden" name="user_id" value="{{ f.user_id }}">
+        <button type="submit" class="btn btn-primary btn-sm">+ Add</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% elif not granted_users %}
+    <p class="hint">You have no friends to add yet. <a href="{{ url_for('friends.friends_list') }}">Find people to follow →</a></p>
+  {% endif %}
+</div>
+{% endif %}
+
+<style>
+.sharing-header { padding:2rem 0 1.5rem; border-bottom:1px solid var(--border); margin-bottom:2rem; }
+.sharing-title { font-size:clamp(2rem,5vw,3rem); letter-spacing:-0.03em; margin:0.5rem 0 0.25rem; }
+.sharing-sub { color:var(--text2); font-size:0.9rem; }
+.sharing-card { max-width:560px; margin-bottom:1.5rem; }
+.sharing-card h3 {
+  font-size:0.75rem; font-weight:600; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--text3); margin-bottom:1rem;
+}
+.vis-options { display:flex; flex-direction:column; gap:0.6rem; }
+.vis-option {
+  display:flex; gap:0.9rem; align-items:flex-start;
+  padding:0.9rem 1rem; border:1px solid var(--border);
+  border-radius:var(--radius-sm); cursor:pointer; transition:all 0.15s;
+}
+.vis-option input[type="radio"] { display:none; }
+.vis-option:hover { border-color:var(--border2); background:var(--bg3); }
+.vis-active { border-color:rgba(245,166,35,0.5)!important; background:rgba(245,166,35,0.05)!important; }
+.vis-icon { font-size:1.2rem; flex-shrink:0; margin-top:0.1rem; }
+.vis-option strong { font-size:0.92rem; color:var(--text); display:block; margin-bottom:0.2rem; }
+.vis-option p { font-size:0.8rem; color:var(--text2); margin:0; line-height:1.5; }
+</style>
+
+{% endblock %}

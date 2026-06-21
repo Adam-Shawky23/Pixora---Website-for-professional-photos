@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — Pixora{% endblock %}
+
+{% block content %}
+
+<div class="notif-header">
+  <h1 class="page-title">Notifications</h1>
+</div>
+
+{% if notifs %}
+<div class="notif-list">
+  {% for n in notifs %}
+  <a href="{{ n.link or '#' }}" class="notif-item {% if not n.is_read %}notif-unread{% endif %}">
+    <div class="notif-icon notif-icon-{{ n.type }}">
+      {% if n.type == 'like' %}♥{% elif n.type == 'comment' %}💬{% else %}+{% endif %}
+    </div>
+    <div class="notif-body">
+      <p class="notif-message">{{ n.message }}</p>
+      <p class="notif-time">{{ n.created_at.strftime('%d %b %Y, %H:%M') if n.created_at else '' }}</p>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div style="text-align:center; padding: 4rem 0;">
+  <p style="font-size:3rem; margin-bottom:1rem;">🔔</p>
+  <p class="empty">No notifications yet.</p>
+  <p class="hint">When someone likes or comments on your photos, you'll see it here.</p>
+</div>
+{% endif %}
+
+<style>
+.notif-header {
+  padding: 2rem 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 640px;
+}
+.notif-item {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s;
+  text-decoration: none;
+}
+.notif-item:hover { border-color: var(--border2); text-decoration: none; }
+.notif-unread { border-left: 3px solid var(--amber); }
+
+.notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.notif-icon-like    { background: rgba(224,82,82,0.15); color: var(--red); }
+.notif-icon-comment { background: rgba(245,166,35,0.12); color: var(--amber); }
+.notif-icon-friend  { background: rgba(76,175,125,0.12); color: var(--green); }
+
+.notif-message { font-size: 0.9rem; color: var(--text); margin-bottom: 0.2rem; }
+.notif-time    { font-size: 0.76rem; color: var(--text3); }
+
+/* Badge in navbar */
+.notif-link { position: relative; }
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+</style>
+
+{% endblock %}

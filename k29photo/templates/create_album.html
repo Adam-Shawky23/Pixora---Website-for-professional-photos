@@ -1,28 +1,80 @@
 {% extends 'base.html' %}
-{# Κληρονομούμε το βασικό template #}
-{% block title %}Create Album — k29photo{% endblock %}
+{% block title %}New Album — Pixora{% endblock %}
 
 {% block content %}
-{# Κύριο περιεχόμενο της σελίδας #}
-
-{# Container για τη φόρμα δημιουργίας αλμπουμ #}
 <div class="form-page">
-  {# Τίτλος της σελίδας #}
-  <h1>New Album</h1>
-  
-  {# Φόρμα για δημιουργία νέου αλμπουμ #}
-  {# Στέλνουμε τα δεδομένα με POST method στη create_album συνάρτηση #}
-  <form action="{{ url_for('albums.create_album') }}" method="post" class="form-card">
-    {# Ετικέτα με όνομα του πεδίου #}
-    <label>Album Name *
-      {# Πεδίο κειμένου για το όνομα του αλμπουμ #}
-      {# Το * σημαίνει ότι είναι υποχρεωτικό #}
-      <input type="text" name="name" class="input" required autofocus placeholder="e.g. Summer in Nafplion">
-    </label>
-    
-    {# Κουμπί υποβολής της φόρμας #}
-    <button type="submit" class="btn btn-primary">Create Album</button>
-  </form>
+  <h1>New album</h1>
+
+  <div class="form-card">
+    <form method="post">
+
+      <label>Album name
+        <input type="text" name="name" class="input" required autofocus
+               placeholder="e.g. Summer in Nafplio">
+      </label>
+
+      <label style="margin-top:1.25rem; display:block; font-size:0.78rem; font-weight:600;
+                    letter-spacing:0.08em; text-transform:uppercase; color:var(--text3);">
+        Who can see this album
+      </label>
+
+      <div class="vis-options">
+        <label class="vis-option vis-active">
+          <input type="radio" name="visibility" value="public" checked onchange="selectVis(this)">
+          <div class="vis-icon">🌍</div>
+          <div>
+            <strong>Public</strong>
+            <p>Anyone can view — including guests not logged in.</p>
+          </div>
+        </label>
+
+        <label class="vis-option">
+          <input type="radio" name="visibility" value="friends" onchange="selectVis(this)">
+          <div class="vis-icon">⭐</div>
+          <div>
+            <strong>Close Friends</strong>
+            <p>Only people you specifically choose can view this. You can manage the list after creating it.</p>
+          </div>
+        </label>
+
+        <label class="vis-option">
+          <input type="radio" name="visibility" value="private" onchange="selectVis(this)">
+          <div class="vis-icon">🔒</div>
+          <div>
+            <strong>Private</strong>
+            <p>Only you can see this album. Nobody else has access.</p>
+          </div>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary"
+              style="width:100%; justify-content:center; margin-top:1.5rem; padding:0.75rem;">
+        Create album
+      </button>
+    </form>
+  </div>
 </div>
+
+<script>
+function selectVis(radio) {
+  document.querySelectorAll('.vis-option').forEach(el => el.classList.remove('vis-active'));
+  radio.closest('.vis-option').classList.add('vis-active');
+}
+</script>
+
+<style>
+.vis-options { display:flex; flex-direction:column; gap:0.6rem; margin-top:0.6rem; }
+.vis-option {
+  display:flex; gap:0.9rem; align-items:flex-start;
+  padding:0.9rem 1rem; border:1px solid var(--border);
+  border-radius:var(--radius-sm); cursor:pointer; transition:all 0.15s;
+}
+.vis-option input[type="radio"] { display:none; }
+.vis-option:hover { border-color:var(--border2); background:var(--bg3); }
+.vis-active { border-color:rgba(245,166,35,0.5)!important; background:rgba(245,166,35,0.05)!important; }
+.vis-icon { font-size:1.2rem; flex-shrink:0; margin-top:0.1rem; }
+.vis-option strong { font-size:0.92rem; color:var(--text); display:block; margin-bottom:0.2rem; }
+.vis-option p { font-size:0.8rem; color:var(--text2); margin:0; line-height:1.5; }
+</style>
 
 {% endblock %}

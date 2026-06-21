@@ -1,17 +1,33 @@
 {% extends 'base.html' %}
-{% block title %}{{ album.name }} — k29photo{% endblock %}
+{% block title %}{{ album.name }} — Pixora{% endblock %}
+
 {% block content %}
+
 <div class="album-header">
   <div>
-    <h1>{{ album.name }}</h1>
-    <p class="meta">by {{ album.owner_name }} &bull; {{ album.creation_date }}</p>
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+      <h1 style="font-size:2.2rem; letter-spacing:-0.03em;">{{ album.name }}</h1>
+      {% if album.visibility == 'private' %}
+        <span class="visibility-badge private">🔒 Private</span>
+      {% elif album.visibility == 'friends' %}
+        <span class="visibility-badge friends">⭐ Close Friends</span>
+      {% endif %}
+    </div>
+    <p class="meta">
+      by <a href="{{ url_for('main.user_profile', user_id=album.owner_id) }}">{{ album.owner_name }}</a>
+      &nbsp;·&nbsp; {{ photos|length }} photo{% if photos|length != 1 %}s{% endif %}
+      &nbsp;·&nbsp; Created {{ album.creation_date }}
+    </p>
   </div>
-  {% if session.user_id == album.owner_id %}
+
+  {% if is_owner %}
   <div class="album-actions">
-    <a href="{{ url_for('photos.upload_photo') }}" class="btn btn-outline btn-sm">+ Add Photo</a>
-    <form action="{{ url_for('albums.delete_album', album_id=album.album_id) }}" method="post"
-          onsubmit="return confirm('Delete this entire album and all its photos?')">
-      <button type="submit" class="btn btn-danger btn-sm">Delete Album</button>
+    <a href="{{ url_for('albums.manage_sharing', album_id=album.album_id) }}"
+       class="btn btn-outline btn-sm">Privacy settings</a>
+    <a href="{{ url_for('photos.upload_photo') }}" class="btn btn-primary btn-sm">+ Upload photo</a>
+    <form method="post" action="{{ url_for('albums.delete_album', album_id=album.album_id) }}"
+          onsubmit="return confirm('Delete this album and all its photos?')">
+      <button class="btn btn-danger btn-sm">Delete album</button>
     </form>
   </div>
   {% endif %}
@@ -27,16 +43,41 @@
     </div>
     <div class="photo-info">
       <p class="photo-caption">{{ photo.caption or 'Untitled' }}</p>
-      <p class="photo-meta">{{ photo.like_count }} ♥ &bull; {{ photo.comment_count }} 💬</p>
+      <p class="photo-meta">♥ {{ photo.like_count }}</p>
     </div>
   </a>
   {% endfor %}
 </div>
 {% else %}
-<p class="empty">This album has no photos yet.
-  {% if session.user_id == album.owner_id %}
-    <a href="{{ url_for('photos.upload_photo') }}">Upload one now.</a>
+<div style="text-align:center; padding:4rem 0;">
+  <p style="font-size:3rem; margin-bottom:1rem;">📷</p>
+  <p class="empty">No photos in this album yet.</p>
+  {% if is_owner %}
+    <a href="{{ url_for('photos.upload_photo') }}" class="btn btn-primary" style="margin-top:1rem">
+      Upload your first photo
+    </a>
   {% endif %}
-</p>
+</div>
 {% endif %}
+
+<style>
+.album-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2rem 0 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+.album-actions { display: flex; gap: 0.5rem; flex-shrink: 0; flex-wrap: wrap; align-items: center; }
+.visibility-badge {
+  font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.65rem;
+  border-radius: 10px; border: 1px solid var(--border);
+  color: var(--text3); background: var(--bg3);
+}
+.visibility-badge.friends { color:var(--amber); border-color:rgba(245,166,35,0.3); background:rgba(245,166,35,0.07); }
+.visibility-badge.private { color:var(--red);   border-color:rgba(224,82,82,0.3);  background:rgba(224,82,82,0.07); }
+</style>
+
 {% endblock %}

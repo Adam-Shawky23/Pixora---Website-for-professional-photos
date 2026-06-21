@@ -45,7 +45,7 @@
     <div class="sidebar-card">
       <h3>Find Users</h3>
       {# Φόρμα αναζήτησης #}
-      <form action="{{ url_for('friends.my_friends') }}" method="get" class="search-form">
+      <form action="{{ url_for('friends.friends_list') }}" method="get" class="search-form">
         {# Πεδίο εισόδου για όνομα ή email #}
         <input type="text" name="q" value="{{ search_q }}" placeholder="Name or email..." class="input">
         <button type="submit" class="btn btn-primary btn-sm">Search</button>

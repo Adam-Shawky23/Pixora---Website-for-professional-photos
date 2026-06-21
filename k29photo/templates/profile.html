@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.first_name }} {{ profile_user.last_name }} — Pixora{% endblock %}
+
+{% block content %}
+
+<div class="profile-header">
+  <div class="profile-avatar">
+    {{ profile_user.first_name[0] }}{{ profile_user.last_name[0] }}
+  </div>
+
+  <div class="profile-info">
+    <h1 class="profile-name">
+      {{ profile_user.first_name }} {{ profile_user.last_name }}
+    </h1>
+    {% if profile_user.hometown %}
+      <p class="profile-meta">📍 {{ profile_user.hometown }}</p>
+    {% endif %}
+
+    <div class="profile-stats">
+      <div class="stat">
+        <span class="stat-number">{{ stats.total_photos or 0 }}</span>
+        <span class="stat-label">Photos</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ albums|length }}</span>
+        <span class="stat-label">Albums</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats.total_likes_received or 0 }}</span>
+        <span class="stat-label">Likes received</span>
+      </div>
+    </div>
+
+    {% if not is_own_profile and session.user_id %}
+      {% if is_friend %}
+        <form method="post" action="{{ url_for('friends.remove_friend', friend_id=profile_user.user_id) }}" style="display:inline">
+          <button class="btn btn-outline btn-sm">Unfollow</button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('friends.add_friend', friend_id=profile_user.user_id) }}" style="display:inline">
+          <button class="btn btn-primary btn-sm">+ Follow</button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    {% if is_own_profile %}
+      <a href="{{ url_for('albums.create_album') }}" class="btn btn-primary btn-sm">+ New Album</a>
+      <a href="{{ url_for('photos.upload_photo') }}" class="btn btn-outline btn-sm">Upload Photo</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if top_photo %}
+<div class="profile-highlight">
+  <p class="section-label">Most Liked Photo</p>
+  <a href="{{ url_for('photos.view_photo', photo_id=top_photo.photo_id) }}" class="highlight-card">
+    <img src="{{ url_for('photos.serve_image', photo_id=top_photo.photo_id) }}"
+         alt="{{ top_photo.caption }}">
+    <div class="highlight-info">
+      <span>{{ top_photo.caption or 'Untitled' }}</span>
+      <span class="highlight-likes">♥ {{ top_photo.like_count }}</span>
+    </div>
+  </a>
+</div>
+{% endif %}
+
+<div class="profile-albums-section">
+  <p class="section-label">Albums</p>
+  {% if albums %}
+    <div class="album-grid">
+      {% for a in albums %}
+      <a href="{{ url_for('albums.view_album', album_id=a.album_id) }}" class="album-card">
+        <div class="album-card-inner">
+          <div class="album-card-top">
+            <span class="browse-count">{{ a.photo_count }} photo{% if a.photo_count != 1 %}s{% endif %}</span>
+            {% if a.visibility != 'public' %}
+              <span class="badge">{{ a.visibility }}</span>
+            {% endif %}
+          </div>
+          <h3 class="browse-name">{{ a.name }}</h3>
+          <p class="browse-date">{{ a.creation_date }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty">No public albums yet.</p>
+  {% endif %}
+</div>
+
+<style>
+.profile-header {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  padding: 2.5rem 0 2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+
+.profile-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--amber), var(--amber2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: #000;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.profile-name {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.3rem;
+}
+
+.profile-meta {
+  color: var(--text2);
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.stat { display: flex; flex-direction: column; gap: 0.1rem; }
+.stat-number {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+  font-family: 'Playfair Display', serif;
+}
+.stat-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.profile-highlight { margin-bottom: 2.5rem; }
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 1rem;
+}
+.highlight-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  max-width: 420px;
+  transition: border-color 0.2s;
+}
+.highlight-card:hover { border-color: var(--border2); text-decoration: none; }
+.highlight-card img { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; }
+.highlight-info { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.88rem; color: var(--text); }
+.highlight-likes { color: var(--red); font-size: 0.8rem; }
+
+.profile-albums-section { margin-bottom: 3rem; }
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.album-card-inner { padding: 1.25rem; }
+</style>
+
+{% endblock %}
