@@ -5,7 +5,7 @@ A full-stack photo-sharing platform built with Flask and PostgreSQL — inspired
 pixora-rlag.onrender.com
 
 **Homepage**
-![Homepage](README_photos/Screenshot%202026-06-24%20at%207.25.58%20PM.png)
+![Homepage](README_photos/Screenshot%202026-06-24%20at%207.25.58PM.png)
 
 **Browse & Discovery**
 ![Browse](README_photos/Screenshot%202026-06-24%20at%207.39.55%20PM.png)
