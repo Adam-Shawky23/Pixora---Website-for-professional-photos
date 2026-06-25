@@ -4,16 +4,13 @@ A full-stack photo-sharing platform built with Flask and PostgreSQL — inspired
 
 pixora-rlag.onrender.com
 
-![Homepage](README_photos/Screenshot%202026-06-24%20at%207.25.58%20PM.png)
+![Homepage](k29photo/README_photos/Screenshot%202026-06-24%20at%207.25.58%20PM.png)
 
-**Browse & Discovery**
-![Browse](README_photos/Screenshot%202026-06-24%20at%207.39.55%20PM.png)
+![Browse](k29photo/README_photos/Screenshot%202026-06-24%20at%207.39.55%20PM.png)
 
-**Photo Detail**
-![Photo Detail](README_photos/Screenshot%202026-06-24%20at%207.40.30%20PM.png)
+![Photo Detail](k29photo/README_photos/Screenshot%202026-06-24%20at%207.40.30%20PM.png)
 
-**Top Users**
-![Top Users](README_photos/Screenshot%202026-06-24%20at%207.40.36%20PM.png)
+![Top Users](k29photo/README_photos/Screenshot%202026-06-24%20at%207.40.36%20PM.png)
 
 
 What is Pixora?
